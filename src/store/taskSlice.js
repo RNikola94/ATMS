@@ -30,6 +30,13 @@ const taskSlice = createSlice({
         setError(state, action) {
             state.error = action.payload;
         },
+        clearNewTaskFlags(state) {
+            state.tasks.forEach(task => {
+                if (task.isNew) {
+                    task.isNew = false;
+                }
+            });
+        },
     },
 });
 
@@ -38,7 +45,8 @@ export const {
     addTask,
     updateTaskStatus,
     setLoading,
-    setError
+    setError,
+    clearNewTaskFlags,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;
@@ -48,9 +56,10 @@ export const createTask = (taskData) => async (dispatch) => {
       dispatch(setLoading(true));
       const taskRef = await addDoc(collection(db, 'tasks'), {
         ...taskData,
+        isNew: true,
         createdAt: serverTimestamp(),
       });
-      dispatch(addTask({ id: taskRef.id, ...taskData, createdAt: new Date().toISOString() }));
+      dispatch(addTask({ id: taskRef.id, ...taskData, isNew: true, createdAt: new Date().toISOString() }));
       dispatch(setLoading(false));
     } catch (error) {
       dispatch(setError(error.message));

@@ -1,0 +1,18 @@
+.notifications-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .notification {
+    background-color: #ffeb3b;
+    color: #333;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 300px;
+  }
+  
