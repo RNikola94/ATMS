@@ -1,15 +1,18 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { updateTask, listenToTasks } from '../../store/taskSlice';
+import { updateTaskStatus, listenToTasks } from '../../store/taskSlice';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const TaskList = () => {
   const dispatch = useDispatch();
   const { tasks } = useSelector((state) => state.tasks);
+  const { userRole, userId } = useSelector((state) => state.auth);
+  const users = useSelector((state) => state.users.list);
 
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [sortOption, setSortOption] = useState('');
+  const [assignedFilter, setAssignedFilter] = useState(userId);
 
   useEffect(() => {
     dispatch(listenToTasks());
@@ -19,11 +22,15 @@ const TaskList = () => {
     let filteredTasks = tasks;
 
     if (statusFilter) {
-      filteredTasks = filteredTasks.filter(task => task.status === statusFilter);
+      filteredTasks = filteredTasks.filter((task) => task.status === statusFilter);
     }
 
     if (priorityFilter) {
-      filteredTasks = filteredTasks.filter(task => task.priority === priorityFilter);
+      filteredTasks = filteredTasks.filter((task) => task.priority === priorityFilter);
+    }
+
+    if (assignedFilter) {
+      filteredTasks = filteredTasks.filter((task) => task.assignedUser === assignedFilter);
     }
 
     if (sortOption === 'Due Date') {
@@ -61,6 +68,18 @@ const TaskList = () => {
           <option value="Due Date">Due Date</option>
           <option value="Priority">Priority</option>
         </select>
+
+        {/* Assigned User Filter, visible only to admins and managers */}
+        {(userRole === 'admin' || userRole === 'manager') && (
+          <select onChange={(e) => setAssignedFilter(e.target.value)} value={assignedFilter}>
+            <option value="">All Assigned Users</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Task Cards */}
@@ -77,12 +96,22 @@ const TaskList = () => {
           <p>Priority: {task.priority}</p>
           <p>Deadline: {task.deadline}</p>
           <p>Status: {task.status}</p>
-          <button onClick={() => dispatch(updateTask({ ...task, status: 'In Progress' }))}>
-            Mark In Progress
-          </button>
-          <button onClick={() => dispatch(updateTask({ ...task, status: 'Completed' }))}>
-            Mark Completed
-          </button>
+          {task.assignedUser && (
+            <p>Assigned to: {users.find((user) => user.id === task.assignedUser)?.name || 'Unknown'}</p>
+          )}
+          
+          {/* Conditionally render buttons based on role */}
+          {userRole === 'contributor' && task.assignedUser === userId && (
+            <button onClick={() => dispatch(updateTaskStatus({ taskId: task.id, status: 'In Progress', userRole }))}>
+              Mark In Progress
+            </button>
+          )}
+          
+          {(userRole === 'admin' || userRole === 'manager') && (
+            <button onClick={() => dispatch(updateTaskStatus({ taskId: task.id, status: 'Completed', userRole }))}>
+              Mark Completed
+            </button>
+          )}
         </motion.div>
       ))}
     </div>
