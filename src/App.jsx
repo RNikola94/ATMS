@@ -7,6 +7,7 @@ import { useSelector } from "react-redux"
 import AdminDashboard from "./pages/admin-dashboard/AdminDashboard.page"
 import UserDashboard from "./pages/user-dashboard/UserDashboard.page"
 import LoginPage from "./pages/login/Login.page"
+import TaskNotifications from "./components/task-notifications/TaskNotifications.component"
 
 function App() {
 
@@ -40,7 +41,10 @@ function App() {
   ])
 
   return (
+    <>
     <RouterProvider router={router} />
+    <TaskNotifications position="top-right" autoClose={3000} hideProgressBar theme="dark" />
+    </>
   )
 }
 

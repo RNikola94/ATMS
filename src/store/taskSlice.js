@@ -50,7 +50,7 @@ export const updateTaskStatus = createAsyncThunk(
 // Thunk to listen for real-time task updates
 export const listenToTasks = () => (dispatch) => {
   const tasksCollection = collection(db, 'tasks');
-  onSnapshot(tasksCollection, (snapshot) => {
+  const unsubscribe = onSnapshot(tasksCollection, (snapshot) => {
     const tasks = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -58,7 +58,10 @@ export const listenToTasks = () => (dispatch) => {
     }));
     dispatch(setTasks(tasks));
   });
+
+  return unsubscribe;
 };
+
 
 const tasksSlice = createSlice({
   name: 'tasks',
@@ -68,11 +71,10 @@ const tasksSlice = createSlice({
       state.tasks = action.payload;
     },
     clearNewTaskFlags(state) {
-      state.tasks.forEach(task => {
-        if (task.isNew) {
-          task.isNew = false;
-        }
-      });
+      state.tasks = state.tasks.map(task => ({
+        ...task,
+        isNew: false
+      }));
     },
   },
   extraReducers: (builder) => {

@@ -16,20 +16,30 @@ const TaskNotifications = () => {
       const deadline = new Date(task.deadline);
       const now = new Date();
 
-      // Notify if deadline is within 24 hours
+      // Check for upcoming deadlines and add notifications
       if (deadline - now < 24 * 60 * 60 * 1000 && task.status !== 'Completed') {
         newNotifications.push(`Task "${task.title}" is due soon!`);
       }
 
-      // Notify about newly added tasks
+      // Check for newly created tasks
       if (task.isNew) {
         newNotifications.push(`New task "${task.title}" has been created!`);
       }
     });
 
-    setNotifications(newNotifications);
-    dispatch(clearNewTaskFlags());
-  }, [tasks, dispatch]);
+    // Update notifications only if they differ from the current state
+    if (newNotifications.length !== notifications.length || 
+        !newNotifications.every((item, index) => item === notifications[index])) {
+      setNotifications(newNotifications);
+    }
+
+    // Dispatch clearNewTaskFlags only if there are new tasks
+    const hasNewTasks = tasks.some(task => task.isNew);
+    if (hasNewTasks) {
+      dispatch(clearNewTaskFlags());
+    }
+    
+  }, [tasks, dispatch, notifications.length]);
 
   const dismissNotifications = () => setNotifications([]);
 

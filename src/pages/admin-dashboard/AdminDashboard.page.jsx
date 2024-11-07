@@ -1,68 +1,92 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers } from '../../store/userSlice';
+import { listenToUsers, deleteUser, updateUser } from '../../store/userSlice';
+import UserDetailsModal from '../../components/user-details-modal/UserDetailsModal.component';
+import TasksSection from '../../components/tasks-section/TasksSection';
+import './AdminDashboard.styles.css';
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
   const { users, loading, error } = useSelector((state) => state.users);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  console.log('UZZERSSS', users);
 
   useEffect(() => {
-    dispatch(fetchUsers());
+    const unsubscribe = dispatch(listenToUsers());
+    return () => unsubscribe();
   }, [dispatch]);
+
+  const handleViewDetails = (user) => {
+    setSelectedUser(user);
+    setIsEditMode(false);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setIsEditMode(true);
+  };
+
+  const handleDeleteUser = (userId) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      dispatch(deleteUser(userId));
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedUser(null);
+  };
 
   return (
     <div className="dashboard">
-      <h1>Admin Dashboard - {user?.firstName} {user?.lastName}</h1>
-      <p>Email: {user?.email}</p>
+      <h1>Admin Dashboard</h1>
 
-      <div className="admin-actions">
+      {loading && <p>Loading users...</p>}
+      {error && <p>Error: {error}</p>}
+
+      <div className="user-list">
         <h2>Manage Users</h2>
-        
-        {loading && <p>Loading users...</p>}
-        {error && <p>Error: {error}</p>}
-
-        {!loading && !error && (
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
+        <table>
+          <thead>
+            <tr>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.firstName}</td>
+                <td>{user.lastName}</td>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
+                <td>
+                  <button onClick={() => handleViewDetails(user)}>View</button>
+                  <button onClick={() => handleEditUser(user)}>Edit</button>
+                  <button onClick={() => handleDeleteUser(user.id)}>Delete</button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.firstName} {user.lastName}</td>
-                  <td>{user.email}</td>
-                  <td>{user.role}</td>
-                  <td>
-                    <button onClick={() => handleViewUser(user.id)}>View</button>
-                    <button onClick={() => handleEditUser(user.id)}>Edit</button>
-                    <button onClick={() => handleDeleteUser(user.id)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {selectedUser && (
+        <UserDetailsModal 
+          user={selectedUser} 
+          isEditMode={isEditMode} 
+          onClose={handleCloseModal} 
+          onSave={(updatedUser) => dispatch(updateUser(updatedUser))} 
+        />
+      )}
+
+      <TasksSection />
     </div>
   );
-};
-
-const handleViewUser = (userId) => {
-  console.log(`View details for user: ${userId}`);
-};
-
-const handleEditUser = (userId) => {
-  console.log(`Edit user: ${userId}`);
-};
-
-const handleDeleteUser = (userId) => {
-  console.log(`Delete user: ${userId}`);
 };
 
 export default AdminDashboard;
